@@ -15,8 +15,8 @@
   h1{font-size:27px; margin:4px 0 6px;}
   .accents{display:flex; gap:6px; margin:6px 0 20px;}
   .accents span{width:22px; height:6px; border-radius:2px;}
-  .topbar{display:flex; justify-content:space-between; align-items:flex-start;}
-  .topctrl{display:flex; gap:10px; align-items:center;}
+  .topbar{display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px; margin-bottom:10px;}
+  .topctrl{display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
   .zoomctl{display:flex; align-items:center; gap:4px; border:1px solid var(--line); border-radius:20px; padding:4px 8px;}
   .zoomctl button{font-family:Arial; border:none; background:none; color:var(--teal); font-weight:bold; font-size:15px; cursor:pointer; width:22px;}
   .zoomctl span{font-size:11px; color:var(--gray); min-width:34px; text-align:center;}
@@ -35,10 +35,14 @@
   .cols{display:grid; grid-template-columns:2.5fr 1fr; gap:18px; align-items:start;}
   .card{border:1px solid var(--line); border-radius:12px; padding:16px 18px;}
   .card h2{color:var(--teal); font-size:11.5px; letter-spacing:2px; text-transform:uppercase; margin-bottom:12px;}
-  table{width:100%; border-collapse:collapse; font-size:12px; table-layout:fixed;}
-  thead th:nth-child(1){width:3.5%} thead th:nth-child(2){width:41%} thead th:nth-child(3){width:12.5%}
-  thead th:nth-child(4){width:7%} thead th:nth-child(5){width:7%} thead th:nth-child(6){width:6.5%}
-  thead th:nth-child(7){width:17.5%; text-align:center} thead th:nth-child(8){width:5%}
+  table{width:100%; border-collapse:collapse; font-size:12px; table-layout:auto;}
+  .tblwrap{overflow-x:auto;}
+  .cols > *{min-width:0;}
+  thead th:nth-child(7){text-align:center}
+  thead th{white-space:nowrap;}
+  tbody td:nth-child(2){min-width:220px;}
+  tbody td:nth-child(1), tbody td:nth-child(4), tbody td:nth-child(5), tbody td:nth-child(6),
+  tbody td:nth-child(7), tbody td:nth-child(8){white-space:nowrap; width:1%;}
   thead th{background:var(--teal); color:#fff; padding:7px 8px; text-align:left; font-size:10px;
     letter-spacing:1px; text-transform:uppercase;}
   thead th:first-child{border-radius:8px 0 0 8px;} thead th:last-child{border-radius:0 8px 8px 0;}
@@ -52,7 +56,7 @@
   .rowacts{display:flex; gap:6px; align-items:center; white-space:nowrap;}
   .edit{color:var(--teal); cursor:pointer; font-weight:bold; font-size:14px; padding:0 2px;}
   .edit:hover{color:#005f70;}
-  .estado-btns{display:flex; gap:3px; justify-content:center;}
+  .estado-btns{display:flex; gap:3px; justify-content:center; flex-wrap:nowrap;}
   .estado-btns button{font-family:Arial; font-size:9.5px; font-weight:bold; border-radius:11px; cursor:pointer; white-space:nowrap;
     padding:3px 8px; border:1px solid var(--line); background:#fff; color:var(--gray); transition:all .15s;}
   .estado-btns button:hover{border-color:var(--gray);}
@@ -108,6 +112,12 @@
   .foot{margin-top:16px; font-size:10.5px; color:var(--gray);}
   button.reset{font-family:Arial; margin-left:10px; font-size:10.5px; border:none; background:none;
     color:var(--teal); cursor:pointer; text-decoration:underline;}
+  /* --- agregado: adaptación al zoom (pantalla angosta) --- */
+  body.narrow .cols{grid-template-columns:1fr;}
+  body.narrow #side{display:grid; grid-template-columns:repeat(3,1fr); gap:14px; align-items:start;}
+  body.narrow #side .card{margin-bottom:0 !important;}
+  body.xnarrow #side{grid-template-columns:1fr;}
+  body.xnarrow .chips{grid-template-columns:repeat(3,1fr);}
   /* --- agregado: gestión de foros (fechas editables) --- */
   .btn-ghost{font-family:Arial; font-size:12px; font-weight:bold; color:var(--teal); background:#fff;
     border:1px solid var(--teal); border-radius:20px; padding:8px 14px; cursor:pointer; white-space:nowrap;}
@@ -173,13 +183,13 @@
   <div class="cols">
     <div class="card">
       <h2 id="tableTitle">Compromisos</h2>
-      <table>
+      <div class="tblwrap"><table>
         <thead><tr><th>N°</th><th>Compromiso</th><th>Responsable</th><th>F. Inicio</th><th>F. Plan</th>
         <th>Días atraso</th><th>Estado</th><th></th></tr></thead>
         <tbody id="tbody"></tbody>
-      </table>
+      </table></div>
     </div>
-    <div>
+    <div id="side">
       <div class="card" style="margin-bottom:14px;">
         <h2>Distribución por estado</h2>
         <div class="donut-wrap">
@@ -280,8 +290,16 @@ function resetTodo(){
 
 // ---------- zoom (se guarda por equipo/navegador) ----------
 let ZOOM = parseFloat(localStorage.getItem('foroFinZoom') || '0') || (window.innerWidth < 1100 ? 0.7 : 1);
+function applyLayout(){
+  // ancho útil en px de la página, considerando el zoom de Chrome (innerWidth) y el de la app (ZOOM)
+  const w = window.innerWidth / ZOOM;
+  document.body.classList.toggle('narrow', w < 1250);
+  document.body.classList.toggle('xnarrow', w < 820);
+}
+window.addEventListener('resize', applyLayout);
 function applyZoom(){
   document.body.style.zoom = ZOOM;
+  applyLayout();
   const el = document.getElementById('zoomlab');
   if(el) el.textContent = Math.round(ZOOM * 100) + '%';
 }
